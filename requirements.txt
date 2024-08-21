@@ -1,0 +1,9 @@
+pandas
+pandas-stubs
+numpy
+matplotlib
+seaborn
+scikit-learn
+pexpect
+ipykernel
+# -e .
