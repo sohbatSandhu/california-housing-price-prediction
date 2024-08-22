@@ -6,4 +6,6 @@ seaborn
 scikit-learn
 pexpect
 ipykernel
+"pymongo[srv]"==3.11
+kaggle
 # -e .

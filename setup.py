@@ -8,7 +8,6 @@ def get_requirements(file_path : str) -> List[str]:
     Returns a list of requirements for running the source code to obtain a deployable application
     '''
     requirements = []
-    
     with open(file_path) as file_obj:
         requirements = file_obj.readlines()
         requirements = [rep.replace("\n", "") for rep in requirements]
