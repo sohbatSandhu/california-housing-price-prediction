@@ -1,0 +1,4 @@
+[2024-08-23 06:52:46,173] 25 root - INFO - Data Ingestion initiated
+[2024-08-23 06:52:46,174] 148 root - INFO - Data already downloaded
+[2024-08-23 06:52:46,319] 60 root - INFO - Train test split initated
+[2024-08-23 06:52:46,438] 67 root - INFO - Ingestion of the data is completed

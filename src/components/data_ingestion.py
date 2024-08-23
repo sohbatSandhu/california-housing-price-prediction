@@ -4,11 +4,11 @@ from src.logger import logging
 from src.exception import CustomException
 
 import subprocess
-from pymongo import MongoClient
+from pymongo import MongoClient # type: ignore
 
 import pandas as pd
 
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split # type: ignore
 from dataclasses import dataclass
 
 @dataclass
@@ -31,23 +31,24 @@ class DataIngestion:
             # load data in a dataframe
             df = pd.read_csv('./notebooks/data/housing.csv')
             
-            # establish connection with database
-            database = DatabaseConnection()
+            # ! debug data upload in MonogoDB
+            # # establish connection with database
+            # database = DatabaseConnection()
             
-            # create database if it does not exist
-            if database.database_exists():
-                logging.info("Database exists")
-            else:
-                database.create_database()
-                logging.info("Database did not exist. Created database successfully.")
+            # # create database if it does not exist
+            # if database.database_exists():
+            #     logging.info("Database exists")
+            # else:
+            #     database.create_database()
+            #     logging.info("Database did not exist. Created database successfully.")
             
-            # create and store data in database if needed
-            if database.data_exists_in_database():
-                logging.info("Data already stored in database.")
-            else:
-                database.create_data_in_database('housing')
-                database.store_data_in_mongodb(df, 'housing')
-                logging.info(f"Data did not exist. Created stored successfully.")
+            # # create and store data in database if needed
+            # if database.data_exists_in_database():
+            #     logging.info("Data already stored in database.")
+            # else:
+            #     database.create_data_in_database('housing')
+            #     database.store_data_in_mongodb(df, 'housing')
+            #     logging.info(f"Data did not exist. Created stored successfully.")
             
             # Make artifact directory for train data if it does not exist
             os.makedirs(os.path.dirname(self.ingestion_config.TRAIN_DATA_PATH), exist_ok = True)
@@ -87,7 +88,7 @@ class DatabaseConnectionConfig:
 class DatabaseConnection:
     def __init__(self):
         self.database_config = DatabaseConnectionConfig()
-        self.client = MongoClient(self.mongo_uri) # connects client to database
+        self.client = MongoClient(self.database_config.mongo_uri) # connects client to database
         logging.info("Client connection successful")
         
     
@@ -98,7 +99,7 @@ class DatabaseConnection:
     # create database in project cluster and stores a database variable
     def create_database(self):
         try:
-            self.db = self.client[self.db_name]
+            self.db = self.client[self.database_config.db_name]
             logging.info("Created empty database for storing California Housing Data")
         except Exception as e:
             raise CustomException(e, sys)
@@ -118,7 +119,7 @@ class DatabaseConnection:
     def store_data_in_mongodb(self, df, collection_name : str):
         try:
             collection = self.db[collection_name]
-            if collection.count_documents == df.shape[0]: # check if the correct data is stored in the collection
+            if collection.count_documents == df.shape[0]: # checks if the correct data is stored in the collection
                 logging.info("Data already stored in database")
             else:
                 collection.delete_many({}) # empties collection for storing new data
