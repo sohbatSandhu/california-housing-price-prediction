@@ -4,8 +4,11 @@ numpy
 matplotlib
 seaborn
 scikit-learn
+xgboost
+catboost
 pexpect
 ipykernel
 pymongo[srv]==3.11
 kaggle
+dill
 -e .
