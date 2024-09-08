@@ -4,15 +4,16 @@ from dataclasses import dataclass
 
 import numpy as np
 import pandas as pd
-from sklearn.compose import ColumnTransformer # type: ignore
+
+from sklearn.compose import ColumnTransformer, make_column_transformer # type: ignore
 from sklearn.impute import SimpleImputer # type: ignore
-from sklearn.pipeline import Pipeline # type: ignore
-from sklearn.preprocessing import OneHotEncoder, StandardScaler # type: ignore
+from sklearn.pipeline import Pipeline, make_pipeline # type: ignore
+from sklearn.preprocessing import OneHotEncoder, StandardScaler, RobustScaler # type: ignore
 
 from src.exception import CustomException
 from src.logger import logging
 
-from src.utils import save_object
+from src.utils import save_object, FeatureEngineering, LogTransformer
 
 @dataclass
 class DataTransformationConfig:
@@ -27,45 +28,38 @@ class DataTransformation:
         This function is responsible for data transformation
         '''
         try:
-            numerical_columns= ["writing_score", "reading_score"]
-            categorical_columns= [
-                "gender",
-                "race_ethnicity",
-                "parental_level_of_education",
-                "lunch",
-                "test_preparation_course",
-            ]
-            
-            num_pipeline= Pipeline(
-                steps=[
-                    ("imputer", SimpleImputer(strategy="median")),
-                    ("scalar", StandardScaler())
-                ]
+            categorical_features, numerical_features, robust_feats, std_feats, _, _, _, _ = self.get_separated_features()
+
+            logging.info(f"Categorical columns: {categorical_features}")
+            logging.info(f"Numerical columns: {numerical_features}")
+
+            # imputation preprocessor
+            imputer_processor = make_column_transformer(
+                (SimpleImputer(strategy="median", fill_value="missing_values"), numerical_features),
+                (SimpleImputer(strategy="most_frequent", fill_value="missing_values"), categorical_features),
             )
-            
-            cat_pipeline= Pipeline(
-                steps=[
-                    ("imputer", SimpleImputer(strategy="most_frequent")),
-                    ("one_hot_encoder", OneHotEncoder(sparse_output=False, handle_unknown="ignore")),
-                    ("scalar", StandardScaler())
-                ]
+
+            logging.info("Built Imputer")
+
+            # Make tranformers for each feature
+            categorical_transformer = make_pipeline(
+                OneHotEncoder(handle_unknown="ignore", sparse_output=False), StandardScaler()
             )
+
+            std_transformer = make_pipeline(StandardScaler())
+
+            robust_transformer = make_pipeline(RobustScaler())
             
-            logging.info(f"Categorical columns: {categorical_columns}")
-            logging.info(f"Numerical columns: {numerical_columns}")
-            logging.info(f"Features Engineered: {engineered_features}")
-            logging.info(f"Log transformed Features: {engineered_features}")
-            
-            preprocesser= ColumnTransformer(
-                [
-                    ("num_pipeline", num_pipeline, numerical_columns), 
-                    ("cat_pipeline", cat_pipeline, categorical_columns)
-                ]
+            # Make Preprocessor
+            preprocessor = make_column_transformer(
+                (std_transformer, std_feats),
+                (robust_transformer, robust_feats),
+                (categorical_transformer, categorical_features),
             )
             
             logging.info("Built Preprocesser")
             
-            return preprocesser
+            return imputer_processor, preprocessor
             
         except Exception as e:
             raise CustomException(e, sys)
@@ -79,31 +73,64 @@ class DataTransformation:
             
             logging.info("Obtaining preprocessing object")
             
-            preprocessing_obj= self.get_data_transformer_object()
+            imputer_processor, preprocessing_obj= self.get_data_transformer_object()
             
-            target_column_name= "math_score"
-            numerical_columns= ["writing_score", "reading_score"]
+            categorical_features, numerical_features, _, _, _, engineered_features, log_features, target = self.get_separated_features()
             
-            input_feature_train_df= train_df.drop(columns=[target_column_name], axis=1)
-            target_feature_train_df= train_df[target_column_name]
+            X_train= train_df.drop(columns=[target], axis=1)
+            y_train= train_df[target]
 
-            input_feature_test_df= test_df.drop(columns=[target_column_name], axis=1)
-            target_feature_test_df= test_df[target_column_name]
+            X_test= test_df.drop(columns=[target], axis=1)
+            y_test= test_df[target]
             
             logging.info(
                 "Applying preprocessing object on training dataframe and testing dataframe."
             )
-
-            input_feature_train_arr=preprocessing_obj.fit_transform(input_feature_train_df)
             
-            input_feature_test_arr=preprocessing_obj.transform(input_feature_test_df)
+            # perform imputation
+            imputed_X_train = pd.DataFrame(
+                imputer_processor.fit_transform(X_train), columns=X_train.columns
+            )
+            imputed_X_test = pd.DataFrame(
+                imputer_processor.transform(X_test), columns=X_train.columns
+            )
+            
+            logging.info("Imputation Performed")
+
+            # Manually convert data types back to original
+            for column in numerical_features:
+                imputed_X_train[column] = imputed_X_train[column].astype(float)
+                imputed_X_test[column] = imputed_X_test[column].astype(float)
+
+            # apply feature endineering and data transformation to train and test data again
+            feat_engineer = FeatureEngineering()
+            transformer = LogTransformer(columns=log_features)
+            
+            logging.info("Perform feature engineering")
+
+            # perform feature engineering
+            engineered_X_train = feat_engineer.fit_transform(imputed_X_train)
+            engineered_X_test = feat_engineer.transform(imputed_X_test)
+
+            logging.info(f"Engineered Features: {engineered_features}")
+            logging.info("Perform Log transformation on Highly skewed features")
+            
+            # perform log transformation
+            transformed_engineered_X_train = transformer.fit_transform(engineered_X_train)
+            transformed_engineered_X_test = transformer.transform(engineered_X_test)
+            
+            logging.info(f"Log transformed Features: {log_features}")
+
+            X_train_arr=preprocessing_obj.fit_transform(transformed_engineered_X_train)
+            
+            X_test_arr=preprocessing_obj.transform(transformed_engineered_X_test)
             
             train_arr = np.c_[
-                input_feature_train_arr, np.array(target_feature_train_df)
+                X_train_arr, np.array(y_train)
             ]
             
             test_arr = np.c_[
-                input_feature_test_arr, np.array(target_feature_test_df)
+                X_test_arr, np.array(y_test)
             ]
 
             logging.info(f"Saved preprocessing object.")
@@ -121,107 +148,68 @@ class DataTransformation:
 
         except Exception as e:
             raise CustomException(e, sys)
-
-class FeatureEngineering:
-    def __init__(self):
-        self.data_transformation_config= DataTransformationConfig()
     
-    def get_data_transformer_object(self):
-        '''
-        This function is responsible for data transformation
-        '''
-        try:
-            numerical_columns= ["writing_score", "reading_score"]
-            categorical_columns= [
-                "gender",
-                "race_ethnicity",
-                "parental_level_of_education",
-                "lunch",
-                "test_preparation_course",
+    def get_separated_features(self):
+            categorical_features = ['ocean_proximity']
+            
+            numerical_features = [
+                'longitude',
+                'latitude',
+                'housing_median_age',
+                'total_bedrooms',
+                'total_rooms',
+                'population',
+                'households',
+                'median_income'
             ]
             
-            num_pipeline= Pipeline(
-                steps=[
-                    ("imputer", SimpleImputer(strategy="median")),
-                    ("scalar", StandardScaler())
-                ]
-            )
-            
-            cat_pipeline= Pipeline(
-                steps=[
-                    ("imputer", SimpleImputer(strategy="most_frequent")),
-                    ("one_hot_encoder", OneHotEncoder(sparse_output=False, handle_unknown="ignore")),
-                    ("scalar", StandardScaler())
-                ]
-            )
-            
-            logging.info(f"Categorical columns: {categorical_columns}")
-            logging.info(f"Numerical columns: {numerical_columns}")
-            logging.info(f"Features Engineered: {engineered_features}")
-            logging.info(f"Log transformed Features: {engineered_features}")
-            
-            preprocesser= ColumnTransformer(
-                [
-                    ("num_pipeline", num_pipeline, numerical_columns), 
-                    ("cat_pipeline", cat_pipeline, categorical_columns)
-                ]
-            )
-            
-            logging.info("Built Preprocesser")
-            
-            return preprocesser
-            
-        except Exception as e:
-            raise CustomException(e, sys)
-        
-    def initiate_data_transformation(self, TRAIN_PATH, TEST_PATH):
-        try:
-            train_df= pd.read_csv(TRAIN_PATH)
-            test_df= pd.read_csv(TEST_PATH)
-            
-            logging.info("Reading train and test data completed")
-            
-            logging.info("Obtaining preprocessing object")
-            
-            preprocessing_obj= self.get_data_transformer_object()
-            
-            target_column_name= "math_score"
-            numerical_columns= ["writing_score", "reading_score"]
-            
-            input_feature_train_df= train_df.drop(columns=[target_column_name], axis=1)
-            target_feature_train_df= train_df[target_column_name]
-
-            input_feature_test_df= test_df.drop(columns=[target_column_name], axis=1)
-            target_feature_test_df= test_df[target_column_name]
-            
-            logging.info(
-                "Applying preprocessing object on training dataframe and testing dataframe."
-            )
-
-            input_feature_train_arr=preprocessing_obj.fit_transform(input_feature_train_df)
-            
-            input_feature_test_arr=preprocessing_obj.transform(input_feature_test_df)
-            
-            train_arr = np.c_[
-                input_feature_train_arr, np.array(target_feature_train_df)
-            ]
-            
-            test_arr = np.c_[
-                input_feature_test_arr, np.array(target_feature_test_df)
+            num_feats = [
+                "longitude",
+                "latitude",
+                "housing_median_age",
+                "total_rooms",
+                "total_bedrooms",
+                "population",
+                "households",
+                "median_income",
+                "rooms_per_household",
+                "bedrooms_per_rooms",
+                "bedrooms_per_households",
+                "population_per_household",
             ]
 
-            logging.info(f"Saved preprocessing object.")
+            std_feats = ["latitude", "longitude", "housing_median_age"]
 
-            save_object(
-                file_path=self.data_transformation_config.preprocessor_obj_file_path,
-                obj=preprocessing_obj
-            )
-
-            return (
-                train_arr,
-                test_arr,
-                self.data_transformation_config.preprocessor_obj_file_path,
-            )    
-
-        except Exception as e:
-            raise CustomException(e, sys)
+            robust_feats = [
+                "total_bedrooms",
+                "total_rooms",
+                "population",
+                "households",
+                "median_income",
+                "rooms_per_household",
+                "bedrooms_per_rooms",
+                "bedrooms_per_households",
+                "population_per_household",
+            ]
+            
+            engineered_features = [
+                "rooms_per_household",
+                "bedrooms_per_rooms",
+                "bedrooms_per_households",
+                "population_per_household",
+            ]
+            
+            log_features = [
+                "total_bedrooms",
+                "total_rooms",
+                "population",
+                "households",
+                "rooms_per_household",
+                "bedrooms_per_rooms",
+                "bedrooms_per_households",
+                "population_per_household",
+            ]
+            
+            target = "median_house_value"
+            
+            return categorical_features, numerical_features, robust_feats, std_feats, num_feats, engineered_features, log_features, target
