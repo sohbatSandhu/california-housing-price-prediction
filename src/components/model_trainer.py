@@ -74,7 +74,7 @@ class ModelTrainer:
             predicted = best_model.predict(X_test)
 
             score = r2_score(y_test, predicted)
-            logging.info("")
+            logging.info(f"Best Model Score on Test Data: {score}")
             
             return score
 
