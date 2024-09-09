@@ -18,6 +18,9 @@ from src.utils import save_object, FeatureEngineering, LogTransformer
 @dataclass
 class DataTransformationConfig:
     preprocessor_obj_file_path= os.path.join('artifacts', "preprocessor.pkl")
+    imputer_obj_file_path= os.path.join('artifacts', "imputer.pkl")
+    featengineering_obj_file_path= os.path.join('artifacts', "featengineering.pkl")
+    logtransformer_obj_file_path= os.path.join('artifacts', "logtransformer.pkl")
 
 class DataTransformation:
     def __init__(self):
@@ -132,18 +135,38 @@ class DataTransformation:
             test_arr = np.c_[
                 X_test_arr, np.array(y_test)
             ]
+            
+            save_object(
+                file_path=self.data_transformation_config.imputer_obj_file_path,
+                obj=imputer_processor
+            )
+            logging.info(f"Saved imputer object.")
 
-            logging.info(f"Saved preprocessing object.")
+            save_object(
+                file_path=self.data_transformation_config.featengineering_obj_file_path,
+                obj=feat_engineer
+            )
+            logging.info(f"Saved feature engineering object.")
+            
+            save_object(
+                file_path=self.data_transformation_config.logtransformer_obj_file_path,
+                obj=transformer
+            )
+            logging.info(f"Saved Log transformer object.")
 
             save_object(
                 file_path=self.data_transformation_config.preprocessor_obj_file_path,
                 obj=preprocessing_obj
             )
+            logging.info(f"Saved preprocessing object.")
 
             return (
                 train_arr,
                 test_arr,
                 self.data_transformation_config.preprocessor_obj_file_path,
+                self.data_transformation_config.imputer_obj_file_path,
+                self.data_transformation_config.featengineering_obj_file_path,
+                self.data_transformation_config.logtransformer_obj_file_path,
             )    
 
         except Exception as e:
