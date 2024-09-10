@@ -1,0 +1,20 @@
+[2024-09-09 12:49:45,483] 27 root - INFO - Data Ingestion initiated
+[2024-09-09 12:49:45,483] 150 root - INFO - Data already downloaded
+[2024-09-09 12:49:45,626] 62 root - INFO - Train test split initated
+[2024-09-09 12:49:45,742] 69 root - INFO - Ingestion of the data is completed
+[2024-09-09 12:49:45,761] 75 root - INFO - Reading train and test data completed
+[2024-09-09 12:49:45,761] 77 root - INFO - Obtaining preprocessing object
+[2024-09-09 12:49:45,761] 36 root - INFO - Categorical columns: ['ocean_proximity']
+[2024-09-09 12:49:45,761] 37 root - INFO - Numerical columns: ['longitude', 'latitude', 'housing_median_age', 'total_bedrooms', 'total_rooms', 'population', 'households', 'median_income']
+[2024-09-09 12:49:45,761] 45 root - INFO - Built Imputer
+[2024-09-09 12:49:45,761] 63 root - INFO - Built Preprocesser
+[2024-09-09 12:49:45,762] 89 root - INFO - Applying preprocessing object on training dataframe and testing dataframe.
+[2024-09-09 12:49:45,787] 101 root - INFO - Imputation Performed
+[2024-09-09 12:49:45,791] 112 root - INFO - Perform feature engineering
+[2024-09-09 12:49:45,794] 118 root - INFO - Engineered Features: ['rooms_per_household', 'bedrooms_per_rooms', 'bedrooms_per_households', 'population_per_household']
+[2024-09-09 12:49:45,794] 119 root - INFO - Perform Log transformation on Highly skewed features
+[2024-09-09 12:49:45,798] 125 root - INFO - Log transformed Features: ['total_bedrooms', 'total_rooms', 'population', 'households', 'rooms_per_household', 'bedrooms_per_rooms', 'bedrooms_per_households', 'population_per_household']
+[2024-09-09 12:49:45,821] 143 root - INFO - Saved imputer object.
+[2024-09-09 12:49:45,822] 149 root - INFO - Saved feature engineering object.
+[2024-09-09 12:49:45,822] 155 root - INFO - Saved Log transformer object.
+[2024-09-09 12:49:45,825] 161 root - INFO - Saved preprocessing object.
