@@ -1,0 +1,3 @@
+[2024-09-10 09:16:45,621] 97 werkzeug - WARNING -  * Debugger is active!
+[2024-09-10 09:16:45,631] 97 werkzeug - INFO -  * Debugger PIN: 177-545-732
+[2024-09-10 09:17:13,154] 97 werkzeug - INFO -  * Detected change in '/Users/sohbatsandhu/Library/CloudStorage/OneDrive-UBC/ML projects/california-housing-price-prediction/application.py', reloading

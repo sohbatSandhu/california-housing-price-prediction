@@ -1,0 +1,12 @@
+[2024-09-10 09:17:14,700] 97 werkzeug - WARNING -  * Debugger is active!
+[2024-09-10 09:17:14,708] 97 werkzeug - INFO -  * Debugger PIN: 177-545-732
+[2024-09-10 09:17:21,978] 97 werkzeug - INFO - 127.0.0.1 - - [10/Sep/2024 09:17:21] "POST /california-housing/predict HTTP/1.1" 200 -
+[2024-09-10 09:18:01,686] 97 werkzeug - INFO - 127.0.0.1 - - [10/Sep/2024 09:18:01] "GET /california-housing/predict HTTP/1.1" 200 -
+[2024-09-10 09:18:02,731] 97 werkzeug - INFO - 127.0.0.1 - - [10/Sep/2024 09:18:02] "POST /california-housing/predict HTTP/1.1" 200 -
+[2024-09-10 09:18:34,280] 97 werkzeug - INFO - 127.0.0.1 - - [10/Sep/2024 09:18:34] "GET /california-housing/predict HTTP/1.1" 200 -
+[2024-09-10 09:18:35,549] 97 werkzeug - INFO - 127.0.0.1 - - [10/Sep/2024 09:18:35] "POST /california-housing/predict HTTP/1.1" 200 -
+[2024-09-10 09:19:00,900] 97 werkzeug - INFO - 127.0.0.1 - - [10/Sep/2024 09:19:00] "GET /california-housing/predict HTTP/1.1" 200 -
+[2024-09-10 09:19:01,925] 97 werkzeug - INFO - 127.0.0.1 - - [10/Sep/2024 09:19:01] "POST /california-housing/predict HTTP/1.1" 200 -
+[2024-09-10 09:21:07,187] 97 werkzeug - INFO - 127.0.0.1 - - [10/Sep/2024 09:21:07] "GET /california-housing/predict HTTP/1.1" 200 -
+[2024-09-10 09:21:08,121] 97 werkzeug - INFO - 127.0.0.1 - - [10/Sep/2024 09:21:08] "POST /california-housing/predict HTTP/1.1" 200 -
+[2024-09-10 09:21:13,467] 97 werkzeug - INFO - 127.0.0.1 - - [10/Sep/2024 09:21:13] "GET /california-housing/predict HTTP/1.1" 200 -

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Housing Form</title>
+    <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='form-style.css')}}">
+</head>
+<body>
+    <h1>
+        <font color="#0088ff" size="30px">California Housing Value Prediction</font>
+    </h1>
+    <div class="container">
+        <form action="{{ url_for('predict_datapoint')}}" method="POST">
+            <h1>
+            <legend>Housing Information Form</legend>
+            </h1>
+            <div class="mb-3">
+                <label class="form-label">Longitude</label>
+                <input class="form-control" type="floatformat" name="longitude" placeholder="Enter your Reading score" min='-125' max='-114' />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Latitude</label>
+                <input class="form-control" type="floatformat" name="latitude"
+                    placeholder="Enter your Reading Score" min='32' max='43' />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Housing Median Age</label>
+                <input class="form-control" type="floatformat" name="housing_median_age" placeholder="Enter Housing Median Age" step="any" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Total Rooms</label>
+                <input class="form-control" type="floatformat" name="total_rooms" placeholder="Enter Total Rooms" step="any" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Total Bedrooms</label>
+                <input class="form-control" type="floatformat" name="total_bedrooms" placeholder="Enter Total Bedrooms" step="any" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Population</label>
+                <input class="form-control" type="floatformat" name="population" placeholder="Enter Population" step="any" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Households</label>
+                <input class="form-control" type="floatformat" name="households" placeholder="Enter Households" step="any" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Median Income</label>
+                <input class="form-control" type="floatformat" name="median_income" placeholder="Enter Median Income" step="any" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Ocean Proximity</label>
+                <select class="form-control" name="ocean_proximity" placeholder="Enter ocean proximity" required>
+                    <option class="placeholder" selected disabled value="">Select ocean proximity</option>
+                    <option value="ISLAND">
+                        ISLAND
+                    </option>
+                    <option value="NEAR OCEAN">
+                        NEAR OCEAN
+                    </option>
+                    <option value="NEAR BAY">
+                        NEAR BAY
+                    </option>
+                    <option value="<1H OCEAN">
+                        &lt;1H OCEAN
+                    </option>
+                    <option value="INLAND">
+                        INLAND
+                    </option>
+                </select>
+            </div>
+            <button type="submit" required>Submit for Prediction</button>
+        </form>
+    </div>
+</body>
+</html>

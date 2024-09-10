@@ -11,4 +11,6 @@ ipykernel
 pymongo[srv]==3.11
 kaggle
 dill
+flask
+python-dotenv
 -e .

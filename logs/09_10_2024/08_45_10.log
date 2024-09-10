@@ -1,0 +1,9 @@
+[2024-09-10 08:45:11,082] 97 werkzeug - WARNING -  * Debugger is active!
+[2024-09-10 08:45:11,091] 97 werkzeug - INFO -  * Debugger PIN: 177-545-732
+[2024-09-10 08:46:12,903] 97 werkzeug - INFO - 127.0.0.1 - - [10/Sep/2024 08:46:12] "GET /california-housing/predict HTTP/1.1" 200 -
+[2024-09-10 08:46:12,986] 97 werkzeug - INFO - 127.0.0.1 - - [10/Sep/2024 08:46:12] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+[2024-09-10 08:46:47,547] 97 werkzeug - INFO - 127.0.0.1 - - [10/Sep/2024 08:46:47] "GET /california-housing/predict HTTP/1.1" 200 -
+[2024-09-10 08:46:47,585] 97 werkzeug - INFO - 127.0.0.1 - - [10/Sep/2024 08:46:47] "GET /static/style.css HTTP/1.1" 200 -
+[2024-09-10 08:48:26,274] 97 werkzeug - INFO - 127.0.0.1 - - [10/Sep/2024 08:48:26] "GET /california-housing/predict HTTP/1.1" 200 -
+[2024-09-10 08:48:26,310] 97 werkzeug - INFO - 127.0.0.1 - - [10/Sep/2024 08:48:26] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+[2024-09-10 08:56:03,648] 97 werkzeug - INFO -  * Detected change in '/Users/sohbatsandhu/Library/CloudStorage/OneDrive-UBC/ML projects/california-housing-price-prediction/application.py', reloading
