@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prediction Result</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 1000px;
+            width: 100%;
+        }
+        h1 {
+            font-size: 28px;
+            margin-bottom: 20px;
+            color: #007bff;
+        }
+        h2 {
+            font-size: 22px;
+            margin-bottom: 30px;
+            color: #343a40;
+        }
+        table {
+            justify: center;
+            width: 100%;
+            margin: 20px 0;
+            border-collapse: collapse;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #007bff;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        .btn-back {
+            background-color: #28a745;
+            color: #ffffff;
+            padding: 12px 20px;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .btn-back:hover {
+            background-color: #218838;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Housing Price Prediction</h1>
+        <h2>
+            The following submitted housing form for a housing district in California<br>
+        </h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Longitude</th>
+                    <th>Latitude</th>
+                    <th>Housing Median Age</th>
+                    <th>Total Rooms</th>
+                    <th>Total Bedrooms</th>
+                    <th>Population</th>
+                    <th>Households</th>
+                    <th>Median Income</th>
+                    <th>Ocean Proximity</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>{{ data.longitude[0] }}</td>
+                    <td>{{ data.latitude[0] }}</td>
+                    <td>{{ data.housing_median_age[0] }}</td>
+                    <td>{{ data.total_rooms[0] }}</td>
+                    <td>{{ data.total_bedrooms[0] }}</td>
+                    <td>{{ data.population[0] }}</td>
+                    <td>{{ data.households[0] }}</td>
+                    <td>{{ data.median_income[0] }}</td>
+                    <td>{{ data.ocean_proximity }}</td>
+                </tr>
+            </tbody>
+        </table>
+        <h2>
+            The predicted median housing value is <font color="red"><strong>{{ results }} USD</strong></font>
+        </h2>
+        <a href="/california-housing/predict" class="btn-back">Submit Another Prediction</a>
+    </div>
+</body>
+</html>
