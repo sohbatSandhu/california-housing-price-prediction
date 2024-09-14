@@ -16,7 +16,7 @@ jobs:
       - name: Set up Python version
         uses: actions/setup-python@v1
         with:
-          python-version: '3.11'
+          python-version: '3.12'
 
       - name: Create and start virtual environment
         run: |
@@ -27,7 +27,7 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Upload artifact for deployment jobs
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: python-app
           path: |
@@ -40,7 +40,7 @@ jobs:
 
     steps:
       - name: Download artifact from build job
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: python-app
           path: .
@@ -55,6 +55,6 @@ jobs:
       - name: Deploy to AWS Elastic Beanstalk
         run: |
           zip -r deploy.zip .
-          eb init -p python-3.11 my-app --region us-west-2
+          eb init -p python-3.12 my-app --region us-west-2
           eb create my-environment
           eb deploy
