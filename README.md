@@ -1,4 +1,4 @@
-# California Housing Price Prediction
+# Automated Real-Time Prediction System for California Housing Prices
 
 ### Table of Contents:
 
@@ -60,7 +60,7 @@ The application is containerized and deployed on both Azure and AWS for scalable
 
 ## Setup and Installation
 ### Prerequisites
-* Python 3.11
+* Python 3.12
 * Anaconda or Miniconda Installed
 * **Microsoft Azure** or **AWS** creditentials
 * .env file with required secret keys
@@ -79,7 +79,7 @@ git clone https://github.com/sohbatSandhu/california-housing-price-prediction.gi
 #### Create Conda or Python Environment
 
 ```
-conda create -p venv python=3.11
+conda create -p venv python=3.12
 ```
 
 #### Install the required packages and dependencies:

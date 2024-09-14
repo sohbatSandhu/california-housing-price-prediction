@@ -8,7 +8,7 @@ xgboost
 catboost
 pexpect
 ipykernel
-pymongo[srv]==3.11
+pymongo
 kaggle
 dill
 flask
