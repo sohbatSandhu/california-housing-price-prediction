@@ -1,4 +1,4 @@
-# Automated Real-Time Prediction System for California Housing Prices
+# Deployable Prediction System for California Housing Prices
 
 ### Table of Contents:
 
