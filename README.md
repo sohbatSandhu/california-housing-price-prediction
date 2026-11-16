@@ -29,6 +29,42 @@ This project demonstrates a complete machine learning pipeline, from data ingest
 - **Kaggle API Integration:** The project automatically downloads the dataset from Kaggle using an API key.
 - **Local and Cloud Storage:** After downloading, the data is saved locally as a CSV file and uploaded to MongoDB Atlas if it's not already stored there.
 
+### Dataset storage and ingestion
+
+Run ingestion from the repository root with `python -m src.components.data_ingestion`.
+Copy `.env.example` to `.env` and configure only the services you intend to use;
+never commit credentials.
+
+- **CSV-only:** leave `MONGODB_URI` empty. Reuse
+  `notebooks/data/housing.csv`, or download it using the authenticated Kaggle CLI
+  when the file is missing and `KAGGLE_DATASET=owner/dataset` is configured.
+- **MongoDB Atlas/cache:** set `MONGODB_URI` and `DATABASE_NAME`.
+  `MONGODB_COLLECTION` defaults to `housing`. A nonempty collection is the
+  source of truth: load its records without the MongoDB `_id` field and skip
+  CSV/Kaggle retrieval. If the collection is empty, load the CSV (downloading it
+  only when needed) and store its records for later runs.
+- Both paths write `artifacts/data.csv`, `artifacts/train.csv`, and
+  `artifacts/test.csv`, using the existing deterministic 80/20 split.
+- Existing collections are not deleted, refreshed, or appended to on ordinary
+  reruns. Use a new, explicitly selected collection for a different dataset.
+  This is a single-writer dataset cache; concurrent first-time population and
+  recovery of a partially written collection are not managed automatically.
+- Empty datasets, missing housing columns, configured MongoDB connection
+  failures, and failed/missing Kaggle downloads stop ingestion rather than
+  silently producing training artifacts.
+
+#### Ingestion regression checks
+
+```bash
+python -m unittest discover -s tests -v
+```
+
+The checks use temporary CSVs, a stateful MongoDB stand-in, and mocked download
+commands. They exercise storage/reuse, duplicate prevention, field validation,
+the train/test artifacts, configuration, and failure paths without credentials,
+a running database, or external downloads. Live Atlas connectivity and the
+Kaggle service require a separate environment-specific check.
+
 ### 2. Data Preprocessing
 The data preprocessing pipeline includes:
 - Imputation
@@ -93,7 +129,7 @@ Set up the Kaggle API and MongoDB Atlas credentials.
 
 Run the following command in the root of the current workplace
 ```
-python src/components/data_ingestion.py
+python -m src.components.data_ingestion
 ```
 
 ### Model Metrics
