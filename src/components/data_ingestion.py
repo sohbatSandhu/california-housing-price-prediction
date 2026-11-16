@@ -1,162 +1,188 @@
-import os
-import sys
-from src.logger import logging
-from src.exception import CustomException
-from src.components.data_transformation import DataTransformationConfig, DataTransformation
-from src.components.model_trainer import ModelTrainer
+"""Load California housing data from MongoDB or a cached/downloaded CSV."""
 
+import os
 import subprocess
-from pymongo import MongoClient # type: ignore
+import sys
+from dataclasses import dataclass, field
+from pathlib import Path
 
 import pandas as pd
+from pymongo import MongoClient
+from sklearn.model_selection import train_test_split
 
-from sklearn.model_selection import train_test_split # type: ignore
-from dataclasses import dataclass
+from src.exception import CustomException
+from src.logger import logging
+
+
+REQUIRED_COLUMNS = {
+    "longitude", "latitude", "housing_median_age", "total_rooms",
+    "total_bedrooms", "population", "households", "median_income",
+    "ocean_proximity", "median_house_value",
+}
+
+
+def validate_dataset(frame):
+    if frame.empty:
+        raise ValueError("Housing dataset must not be empty.")
+    missing = REQUIRED_COLUMNS.difference(frame.columns)
+    if missing:
+        raise ValueError("Housing dataset is missing required columns: " + ", ".join(sorted(missing)))
+    return frame
+
 
 @dataclass
 class DataIngestionConfig:
-    TRAIN_DATA_PATH: str = os.path.join('artifacts', "train.csv")
-    TEST_DATA_PATH: str = os.path.join('artifacts', "test.csv")
-    RAW_DATA_PATH: str = os.path.join('artifacts', "data.csv")
-    
-class DataIngestion:
-    def __init__(self):
-        self.ingestion_config = DataIngestionConfig()
-    
-    def initiate_data_ingestion(self):
-        logging.info("Data Ingestion initiated")
-        try:
-            # Download dataset from kaggle if required
-            data = KaggleCaliforniaHousingDataset()
-            data.download_kaggle_dataset()
-            
-            # load data in a dataframe
-            df = pd.read_csv('./notebooks/data/housing.csv')
-            
-            # ! debug data upload in MonogoDB
-            # # establish connection with database
-            # database = DatabaseConnection()
-            
-            # # create database if it does not exist
-            # if database.database_exists():
-            #     logging.info("Database exists")
-            # else:
-            #     database.create_database()
-            #     logging.info("Database did not exist. Created database successfully.")
-            
-            # # create and store data in database if needed
-            # if database.data_exists_in_database():
-            #     logging.info("Data already stored in database.")
-            # else:
-            #     database.create_data_in_database('housing')
-            #     database.store_data_in_mongodb(df, 'housing')
-            #     logging.info(f"Data did not exist. Created stored successfully.")
-            
-            # Make artifact directory for train data if it does not exist
-            os.makedirs(os.path.dirname(self.ingestion_config.TRAIN_DATA_PATH), exist_ok = True)
-            
-            # store housing data in artifacts folder
-            df.to_csv(self.ingestion_config.RAW_DATA_PATH, index = False, header= True)
-            
-            # split data
-            logging.info("Train test split initated")
-            train_set, test_set = train_test_split(df, test_size= 0.2, random_state= 42)
-            
-            # store full 
-            train_set.to_csv(self.ingestion_config.TRAIN_DATA_PATH, index= False, header= True)
-            test_set.to_csv(self.ingestion_config.TEST_DATA_PATH, index= False, header= True)
-            
-            logging.info("Ingestion of the data is completed")
-            
-            return(
-                self.ingestion_config.TRAIN_DATA_PATH,
-                self.ingestion_config.TEST_DATA_PATH
-            )
-            
-        except Exception as e:
-            raise CustomException(e, sys)
-    
-    def storing_process_database(self):
-        # TODO : implement the complete storing process of the database into the database
-        pass 
+    TRAIN_DATA_PATH: str = os.path.join("artifacts", "train.csv")
+    TEST_DATA_PATH: str = os.path.join("artifacts", "test.csv")
+    RAW_DATA_PATH: str = os.path.join("artifacts", "data.csv")
+
 
 @dataclass
 class DatabaseConnectionConfig:
-    mongo_uri = os.getenv("MONGODB_USER_NAME")
-    username = os.getenv("MONGODB_USER_NAME")
-    password = os.getenv("MONGODB_PASSWORD")
-    db_name = os.getenv("DATABASE_NAME")
+    mongo_uri: str = field(default_factory=lambda: os.getenv("MONGODB_URI", ""))
+    db_name: str = field(default_factory=lambda: os.getenv("DATABASE_NAME", ""))
+    collection_name: str = field(
+        default_factory=lambda: os.getenv("MONGODB_COLLECTION", "housing")
+    )
 
-class DatabaseConnection:
-    def __init__(self):
-        self.database_config = DatabaseConnectionConfig()
-        self.client = MongoClient(self.database_config.mongo_uri) # connects client to database
-        logging.info("Client connection successful")
-        
-    
-    # check if database exists in project cluster
-    def database_exists(self) -> bool:
-        return self.database_config.db_name in self.client.list_database_names()
-
-    # create database in project cluster and stores a database variable
-    def create_database(self):
-        try:
-            self.db = self.client[self.database_config.db_name]
-            logging.info("Created empty database for storing California Housing Data")
-        except Exception as e:
-            raise CustomException(e, sys)
-    
-    # check if dataframe is in database
-    def data_exists_in_database(self, collection_name) -> bool:
-        return collection_name in self.db.collection_names()
-    
-    # create collection for future storage of dataframe in database
-    def create_data_in_database(self, collection_name : str):
-        try:
-            self.db.create_collection(collection_name)
-        except Exception as e:
-            raise CustomException(e, sys)
-    
-    # store data in dataframe datatype in database collection
-    def store_data_in_mongodb(self, df, collection_name : str):
-        try:
-            collection = self.db[collection_name]
-            if collection.count_documents == df.shape[0]: # checks if the correct data is stored in the collection
-                logging.info("Data already stored in database")
-            else:
-                collection.delete_many({}) # empties collection for storing new data
-                data_dict = df.to_dict(orient="records") # convert dataframe to document format
-                collection.insert_many(data_dict)
-                logging.info(f"Stored {collection_name} data in database")
-        except Exception as e:
-            raise CustomException(e, sys)
 
 @dataclass
 class KaggleConfig:
-    DATASET = os.getenv("KAGGLE_DATASET")
-    DATA_PATH = './notebooks/data'
+    DATASET: str = field(default_factory=lambda: os.getenv("KAGGLE_DATASET", ""))
+    DATA_PATH: str = "./notebooks/data"
+
+
+class DatabaseConnection:
+    def __init__(self, config=None):
+        self.database_config = config or DatabaseConnectionConfig()
+        if not self.database_config.mongo_uri or not self.database_config.db_name:
+            raise ValueError("Set both MONGODB_URI and DATABASE_NAME to use MongoDB.")
+        self.client = MongoClient(
+            self.database_config.mongo_uri, serverSelectionTimeoutMS=5000
+        )
+        self.db = self.client[self.database_config.db_name]
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.client.close()
+
+    def database_exists(self):
+        return self.database_config.db_name in self.client.list_database_names()
+
+    def create_database(self):
+        # MongoDB creates databases on the first successful write.
+        return self.db
+
+    def data_exists_in_database(self, collection_name):
+        return self.db[collection_name].count_documents({}) > 0
+
+    def create_data_in_database(self, collection_name):
+        if collection_name not in self.db.list_collection_names():
+            self.db.create_collection(collection_name)
+
+    def read_data_from_mongodb(self, collection_name):
+        frame = pd.DataFrame(list(self.db[collection_name].find({}, {"_id": 0})))
+        return validate_dataset(frame)
+
+    def store_data_in_mongodb(self, frame, collection_name):
+        validate_dataset(frame)
+        collection = self.db[collection_name]
+        existing_count = collection.count_documents({})
+        if existing_count:
+            # This is a persistent dataset cache, not a destructive refresh.
+            logging.info("Reusing the existing housing collection (%s records).", existing_count)
+            return existing_count
+        records = frame.astype(object).where(pd.notna(frame), None).to_dict("records")
+        result = collection.insert_many(records)
+        logging.info("Stored %s housing records in MongoDB.", len(result.inserted_ids))
+        return len(result.inserted_ids)
+
 
 class KaggleCaliforniaHousingDataset:
-    def __init__(self):
-        self.kaggle_config = KaggleConfig()
-    
-    # download Kaggle dataset
+    def __init__(self, config=None):
+        self.kaggle_config = config or KaggleConfig()
+
     def download_kaggle_dataset(self):
+        target = Path(self.kaggle_config.DATA_PATH) / "housing.csv"
+        if target.is_file():
+            logging.info("Using the cached housing CSV.")
+            return target
+        if not self.kaggle_config.DATASET:
+            raise ValueError("Set KAGGLE_DATASET when the local housing.csv is missing.")
+        target.parent.mkdir(parents=True, exist_ok=True)
+        subprocess.run(
+            [
+                "kaggle", "datasets", "download",
+                "-d", self.kaggle_config.DATASET,
+                "-p", self.kaggle_config.DATA_PATH, "--unzip",
+            ],
+            check=True,
+        )
+        if not target.is_file():
+            raise FileNotFoundError("Kaggle download did not produce housing.csv.")
+        return target
+
+
+class DataIngestion:
+    def __init__(self, config=None, database_config=None, kaggle_config=None):
+        self.ingestion_config = config or DataIngestionConfig()
+        self.database_config = database_config or DatabaseConnectionConfig()
+        self.kaggle_config = kaggle_config or KaggleConfig()
+
+    def _load_csv(self):
+        path = KaggleCaliforniaHousingDataset(self.kaggle_config).download_kaggle_dataset()
+        return validate_dataset(pd.read_csv(path))
+
+    def _load_dataset(self):
+        if not self.database_config.mongo_uri:
+            logging.info("MongoDB is not configured; using the local CSV workflow.")
+            return self._load_csv()
+        with DatabaseConnection(self.database_config) as database:
+            collection = self.database_config.collection_name
+            if database.data_exists_in_database(collection):
+                logging.info("Loading the stored housing dataset from MongoDB.")
+                return database.read_data_from_mongodb(collection)
+            frame = self._load_csv()
+            database.store_data_in_mongodb(frame, collection)
+            return frame
+
+    def initiate_data_ingestion(self):
+        logging.info("Data ingestion initiated.")
         try:
-            if not os.path.exists(os.path.join(self.kaggle_config.DATA_PATH, "housing.csv")):
-                subprocess.run(['kaggle', 'datasets', 'download', '-d', self.kaggle_config.dataset, '-p', self.kaggle_config.dataset, '--unzip'], check=True)
-                logging.info("Downloaded Data from Kaggle successfully")
-            else:
-                logging.info("Data already downloaded")
-        except subprocess.CalledProcessError as e:
-            print(f"Error occurred while downloading the dataset: {e}")
-            
+            frame = self._load_dataset()
+            for path in (
+                self.ingestion_config.RAW_DATA_PATH,
+                self.ingestion_config.TRAIN_DATA_PATH,
+                self.ingestion_config.TEST_DATA_PATH,
+            ):
+                Path(path).parent.mkdir(parents=True, exist_ok=True)
+            frame.to_csv(self.ingestion_config.RAW_DATA_PATH, index=False)
+            train_set, test_set = train_test_split(
+                frame, test_size=0.2, random_state=42
+            )
+            train_set.to_csv(self.ingestion_config.TRAIN_DATA_PATH, index=False)
+            test_set.to_csv(self.ingestion_config.TEST_DATA_PATH, index=False)
+            logging.info("Saved raw, training, and test CSV artifacts.")
+            return (
+                self.ingestion_config.TRAIN_DATA_PATH,
+                self.ingestion_config.TEST_DATA_PATH,
+            )
+        except Exception as error:
+            raise CustomException(error, sys) from error
+
+
 if __name__ == "__main__":
+    from dotenv import load_dotenv
+    from src.components.data_transformation import DataTransformation
+    from src.components.model_trainer import ModelTrainer
+
+    load_dotenv(dotenv_path=".env", override=False)
     ingestion = DataIngestion()
-    train_df, test_df = ingestion.initiate_data_ingestion()
-    
-    data_transformation = DataTransformation()
-    train_arr, test_arr, _, _, _, _= data_transformation.initiate_data_transformation(train_df, test_df)
-    
-    modeltrainer = ModelTrainer()
-    print(modeltrainer.initiate_model_trainer(train_arr, test_arr))
+    train_path, test_path = ingestion.initiate_data_ingestion()
+    transformation = DataTransformation()
+    train_array, test_array, _, _, _, _ = transformation.initiate_data_transformation(
+        train_path, test_path
+    )
+    print(ModelTrainer().initiate_model_trainer(train_array, test_array))
